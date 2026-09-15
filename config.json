@@ -1,0 +1,6 @@
+{
+  "kvpName": "weather_forecast",
+  "timeZone": "Europe/London",
+  "allowSnow": false,
+  "snowXmas": true
+}
