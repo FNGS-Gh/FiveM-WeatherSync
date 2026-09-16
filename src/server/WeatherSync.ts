@@ -1,5 +1,3 @@
-import { GenNewForecast } from './forecast';
-
 class WorldWeather {
   private initDate = Date.now();
 
@@ -7,5 +5,3 @@ class WorldWeather {
 
   }
 }
-
-console.dir(GenNewForecast(new Date));
