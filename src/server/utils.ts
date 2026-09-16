@@ -84,7 +84,7 @@ export const getMonthByTimeZone = (
 export const getDayByTimeZone = (
   date: Date,
   timeZone: string
-): number => {
+): Week => {
   const dayName = date.toLocaleDateString(
     'en-US',
     { timeZone, weekday: 'long' }
@@ -93,6 +93,18 @@ export const getDayByTimeZone = (
   return WEEK_ORDER.includes(dayName)
     ? Week[dayName]
     : 0
+};
+
+export const applyWeatherModifier = (
+  instance: WeatherInstance,
+  modifier: WeatherModifier
+): WeatherInstance => {
+  if (instance.base !== WeatherBase.Other)
+    instance.base = WeatherBase.Other;
+
+  instance.modifier = instance.modifier | modifier;
+
+  return instance;
 };
 
 export const getDefaultForecast = (updatedAt: number, timeZone: string): WeatherForecast => ({
