@@ -36,94 +36,82 @@ const GetChancesSet = (season: Season): SeasonChances => {
   return chancesSet;
 }
 
-class ForecastBase {
-  protected timeZone: string;
-  protected season: Season = Season.Winter;
-  protected dayNum: Week = Week.Sunday;
-
-  constructor(date: Date, timeZone: string) {
-    this.timeZone = validateTimezone(timeZone);
-    this.updateDate(date);
-  }
-
-  private genInstanceBySeason(
-    chancesSet: SeasonChances,
-    rainAmplifier = 1.0
-  ): WeatherInstance {
-    const instance: WeatherInstance = {
-      base: WeatherBase.Sunny,
-      modifier: WeatherModifier.None
-    };
-  
-    const rainChance = genChance(rainAmplifier);
-    if (rainChance <= chancesSet.rain) {
-      instance.base = WeatherBase.Other;
-      applyWeatherModifier(instance, WeatherModifier.Rainy);
-  
-      const thunderChance = genChance();
-      if (thunderChance <= chancesSet.thunder)
-        applyWeatherModifier(instance, WeatherModifier.Thunder)
-    } else {
-      const cloudyChance = genChance();
-      if (cloudyChance <= chancesSet.cloudy) {
-        instance.base = WeatherBase.Cloudy;
-  
-        const fogChance = genChance();
-        if (fogChance <= chancesSet.fog)
-          instance.base = WeatherBase.Foggy;
-      }
-    }
-  
-    return instance;
+const GenInstanceBySeason = (
+  chancesSet: SeasonChances,
+  rainAmplifier = 1.0
+): WeatherInstance => {
+  const instance: WeatherInstance = {
+    base: WeatherBase.Sunny,
+    modifier: WeatherModifier.None
   };
 
-  protected getInstance(
-    prevInstance: WeatherInstance | null = null
-  ): WeatherInstance {
-    const rainAmplifier = prevInstance?.base === WeatherBase.Other
-      ? 1.25 : 1.0;
-  
-    const chancesSet: SeasonChances = GetChancesSet(this.season);
-    const instance = this.genInstanceBySeason(chancesSet, rainAmplifier);
-  
-    return instance;
-  }
+  const rainChance = genChance(rainAmplifier);
+  if (rainChance <= chancesSet.rain) {
+    instance.base = WeatherBase.Other;
+    applyWeatherModifier(instance, WeatherModifier.Rainy);
 
-  protected genNewForecast(): WeatherForecast {
-    this.updateDate(new Date);
-    const forecast = getDefaultForecast(Date.now(), this.timeZone);
-  
-    const weekOrder: WeekDay[] = [
-      ...WEEK_ORDER.slice(this.dayNum),
-      ...WEEK_ORDER.slice(0, this.dayNum)
-    ];
-  
-    let prevInstance: WeatherInstance | null = null;
-    for (const day of weekOrder) {
-      const instance = this.getInstance(prevInstance);
-      forecast.schedule[day] = instance;
-      prevInstance = instance;
+    const thunderChance = genChance();
+    if (thunderChance <= chancesSet.thunder)
+      applyWeatherModifier(instance, WeatherModifier.Thunder)
+  } else {
+    const cloudyChance = genChance();
+    if (cloudyChance <= chancesSet.cloudy) {
+      instance.base = WeatherBase.Cloudy;
+
+      const fogChance = genChance();
+      if (fogChance <= chancesSet.fog)
+        instance.base = WeatherBase.Foggy;
     }
-  
-    return forecast;
   }
 
-  protected updateDate(date: Date) {
-    const dateDay = getDayByTimeZone(date, this.timeZone);
-    this.dayNum = Math.max(0, Math.min(6, dateDay));
+  return instance;
+};
 
-    const dateMonth = getMonthByTimeZone(date, this.timeZone);
-    const monthNum = Math.max(0, Math.min(11, dateMonth));
-    this.season = getSeason(monthNum);
+const GetInstance = (
+  season: Season,
+  prevInstance: WeatherInstance | null = null
+): WeatherInstance => {
+  const rainAmplifier = prevInstance?.base === WeatherBase.Other
+    ? 1.25 : 1.0;
+
+  const chancesSet: SeasonChances = GetChancesSet(season);
+  const instance = GenInstanceBySeason(chancesSet, rainAmplifier);
+
+  return instance;
+};
+
+const GenNewForecast = (
+  timeZone: string,
+  season: Season,
+  dayNum: Week
+): WeatherForecast => {
+  const forecast = getDefaultForecast(Date.now(), timeZone);
+
+  const weekOrder: WeekDay[] = [
+    ...WEEK_ORDER.slice(dayNum),
+    ...WEEK_ORDER.slice(0, dayNum)
+  ];
+
+  let prevInstance: WeatherInstance | null = null;
+  for (const day of weekOrder) {
+    const instance = GetInstance(season, prevInstance);
+    forecast.schedule[day] = instance;
+    prevInstance = instance;
   }
-}
 
-class WeekForecast extends ForecastBase {
+  return forecast;
+};
+
+class WeekForecast {
+  private timeZone: string;
+  private season: Season = Season.Winter;
+  private dayNum: Week = Week.Sunday;
   private kvpName: string;
-  private forecast: WeatherForecast;
+  public data: WeatherForecast;
 
   constructor(kvpName: string, timeZone: string) {
-    super(new Date, timeZone);
+    this.timeZone = validateTimezone(timeZone);
+    this.updateDate(new Date);
 
     this.kvpName = kvpName;
 
@@ -140,7 +128,7 @@ class WeekForecast extends ForecastBase {
               this.timeZone
             );
   
-            this.forecast = forecast;
+            this.data = forecast;
             if (this.dayNum !== forecastDay)
               this.updateForecast();
 
@@ -152,33 +140,38 @@ class WeekForecast extends ForecastBase {
       }
     }
     
-    this.forecast = this.genNewForecast();
-    SetResourceKvp(kvpName, JSON.stringify(this.forecast));
+    this.data = GenNewForecast(this.timeZone, this.season, this.dayNum);
+    SetResourceKvp(kvpName, JSON.stringify(this.data));
+  }
+
+  private updateDate(date: Date) {
+    const dateDay = getDayByTimeZone(date, this.timeZone);
+    this.dayNum = Math.max(0, Math.min(6, dateDay));
+
+    const dateMonth = getMonthByTimeZone(date, this.timeZone);
+    const monthNum = Math.max(0, Math.min(11, dateMonth));
+    this.season = getSeason(monthNum);
   }
 
   public updateForecast(): WeatherForecast {
     this.updateDate(new Date);
-    this.forecast.updatedAt = Date.now();
+    this.data.updatedAt = Date.now();
   
     if (this.dayNum > 0) {
       const toUpdDays = WEEK_ORDER.slice(0, this.dayNum);
       const lastDay = WEEK_ORDER[WEEK_ORDER.length - 1];
   
-      let prevInstance: WeatherInstance = this.forecast.schedule[lastDay];
+      let prevInstance: WeatherInstance = this.data.schedule[lastDay];
       for (const day of toUpdDays) {
-        const instance = this.getInstance(prevInstance);
-        this.forecast.schedule[day] = instance;
+        const instance = GetInstance(this.season, prevInstance);
+        this.data.schedule[day] = instance;
         prevInstance = instance;
       }
     }
   
-    SetResourceKvp(this.kvpName, JSON.stringify(this.forecast));
+    SetResourceKvp(this.kvpName, JSON.stringify(this.data));
 
-    return this.forecast;
-  }
-
-  public getForecast(): WeatherForecast {
-    return this.forecast;
+    return this.data;
   }
 }
 
