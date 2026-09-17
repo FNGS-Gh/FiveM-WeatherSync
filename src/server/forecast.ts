@@ -18,7 +18,25 @@ import {
   isValidForecast
 } from './utils';
 
-const GetChancesSet = (season: Season): SeasonChances => {
+// Module Functions
+const getKvpForecast = (kvpName: string): WeatherForecast | null => {
+  try {
+    const rawForecast = GetResourceKvpString(kvpName);
+
+    if (rawForecast) {
+      const tryForecast: unknown = JSON.parse(rawForecast);
+    
+      if (isValidForecast(tryForecast))
+        return tryForecast as WeatherForecast;
+    }
+  } catch (err) {
+    console.error('Corrupted Weather Forecast');
+  }
+
+  return null;
+};
+
+const getChancesSet = (season: Season): SeasonChances => {
   let chancesSet: SeasonChances = Config.winterChances;
 
   switch (season) {
@@ -34,9 +52,9 @@ const GetChancesSet = (season: Season): SeasonChances => {
   }
 
   return chancesSet;
-}
+};
 
-const GenInstanceBySeason = (
+const genInstanceBySeason = (
   chancesSet: SeasonChances,
   rainAmplifier = 1.0
 ): WeatherInstance => {
@@ -67,20 +85,20 @@ const GenInstanceBySeason = (
   return instance;
 };
 
-const GetInstance = (
+const getInstance = (
   season: Season,
   prevInstance: WeatherInstance | null = null
 ): WeatherInstance => {
   const rainAmplifier = prevInstance?.base === WeatherBase.Other
     ? 1.25 : 1.0;
 
-  const chancesSet: SeasonChances = GetChancesSet(season);
-  const instance = GenInstanceBySeason(chancesSet, rainAmplifier);
+  const chancesSet: SeasonChances = getChancesSet(season);
+  const instance = genInstanceBySeason(chancesSet, rainAmplifier);
 
   return instance;
 };
 
-const GenNewForecast = (
+const genNewForecast = (
   timeZone: string,
   season: Season,
   dayNum: Week
@@ -94,7 +112,7 @@ const GenNewForecast = (
 
   let prevInstance: WeatherInstance | null = null;
   for (const day of weekOrder) {
-    const instance = GetInstance(season, prevInstance);
+    const instance = getInstance(season, prevInstance);
     forecast.schedule[day] = instance;
     prevInstance = instance;
   }
@@ -102,6 +120,7 @@ const GenNewForecast = (
   return forecast;
 };
 
+// Main Class
 class WeekForecast {
   private timeZone: string;
   private season: Season = Season.Winter;
@@ -109,39 +128,28 @@ class WeekForecast {
   private kvpName: string;
   public data: WeatherForecast;
 
-  constructor(kvpName: string, timeZone: string) {
+  constructor(
+    kvpName: string,
+    timeZone: string,
+    kvpForecast: WeatherForecast | null
+  ) {
+    this.kvpName = kvpName;
     this.timeZone = validateTimezone(timeZone);
     this.updateDate(new Date);
 
-    this.kvpName = kvpName;
+    if (kvpForecast && kvpForecast.timeZone === this.timeZone) {
+      const forecastDay = getDayByTimeZone(
+        new Date(kvpForecast.updatedAt),
+        this.timeZone
+      );
 
-    const rawForecast = GetResourceKvpString(kvpName);
-    if (rawForecast) {
-      try {
-        const tryForecast: unknown = JSON.parse(rawForecast);
-        
-        if (isValidForecast(tryForecast)) {
-          const forecast = tryForecast as WeatherForecast;
-          if (forecast.timeZone === this.timeZone) {
-            const forecastDay = getDayByTimeZone(
-              new Date(forecast.updatedAt),
-              this.timeZone
-            );
-  
-            this.data = forecast;
-            if (this.dayNum !== forecastDay)
-              this.updateForecast();
-
-            return;
-          }
-        }
-      } catch (err) {
-        console.error('Corrupted Weather Forecast');
-      }
+      this.data = kvpForecast;
+      if (this.dayNum !== forecastDay)
+        this.updateForecast();
+    } else {
+      this.data = genNewForecast(this.timeZone, this.season, this.dayNum);
+      SetResourceKvp(kvpName, JSON.stringify(this.data));
     }
-    
-    this.data = GenNewForecast(this.timeZone, this.season, this.dayNum);
-    SetResourceKvp(kvpName, JSON.stringify(this.data));
   }
 
   private updateDate(date: Date) {
@@ -163,7 +171,7 @@ class WeekForecast {
   
       let prevInstance: WeatherInstance = this.data.schedule[lastDay];
       for (const day of toUpdDays) {
-        const instance = GetInstance(this.season, prevInstance);
+        const instance = getInstance(this.season, prevInstance);
         this.data.schedule[day] = instance;
         prevInstance = instance;
       }
@@ -175,4 +183,8 @@ class WeekForecast {
   }
 }
 
-export const Forecast = new WeekForecast(Config.kvpName, Config.timeZone);
+export const Forecast = new WeekForecast(
+  Config.kvpName,
+  Config.timeZone,
+  getKvpForecast(Config.kvpName)
+);
