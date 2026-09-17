@@ -122,10 +122,12 @@ const genNewForecast = (
 
 // Main Class
 class WeekForecast {
-  private timeZone: string;
+  private readonly kvpName: string;
+  private readonly timeZone: string;
+
   private season: Season = Season.Winter;
   private dayNum: Week = Week.Sunday;
-  private kvpName: string;
+  
   public data: WeatherForecast;
 
   constructor(
