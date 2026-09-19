@@ -40,13 +40,13 @@ const getChancesSet = (season: Season): SeasonChances => {
   let chancesSet: SeasonChances = Config.winterChances;
 
   switch (season) {
-    case Season.Spring:
+    case Season.SPRING:
       chancesSet = Config.springChances;
       break;
-    case Season.Summer:
+    case Season.SUMMER:
       chancesSet = Config.summerChances;
       break;
-    case Season.Autumn:
+    case Season.AUTUMN:
       chancesSet = Config.autumnChances;
       break;
   }
@@ -59,26 +59,26 @@ const genInstanceBySeason = (
   rainAmplifier = 1.0
 ): WeatherInstance => {
   const instance: WeatherInstance = {
-    base: WeatherBase.Sunny,
-    modifier: WeatherModifier.None
+    base: WeatherBase.SUNNY,
+    modifier: WeatherModifier.NONE
   };
 
   const rainChance = genChance(rainAmplifier);
   if (rainChance <= chancesSet.rain) {
-    instance.base = WeatherBase.Other;
-    applyWeatherModifier(instance, WeatherModifier.Rainy);
+    instance.base = WeatherBase.OTHER;
+    applyWeatherModifier(instance, WeatherModifier.RAINY);
 
     const thunderChance = genChance();
     if (thunderChance <= chancesSet.thunder)
-      applyWeatherModifier(instance, WeatherModifier.Thunder)
+      applyWeatherModifier(instance, WeatherModifier.THUNDER)
   } else {
     const cloudyChance = genChance();
     if (cloudyChance <= chancesSet.cloudy) {
-      instance.base = WeatherBase.Cloudy;
+      instance.base = WeatherBase.CLOUDY;
 
       const fogChance = genChance();
       if (fogChance <= chancesSet.fog)
-        instance.base = WeatherBase.Foggy;
+        instance.base = WeatherBase.FOGGY;
     }
   }
 
@@ -89,7 +89,7 @@ const getInstance = (
   season: Season,
   prevInstance: WeatherInstance | null = null
 ): WeatherInstance => {
-  const rainAmplifier = prevInstance?.base === WeatherBase.Other
+  const rainAmplifier = prevInstance?.base === WeatherBase.OTHER
     ? 1.25 : 1.0;
 
   const chancesSet: SeasonChances = getChancesSet(season);
@@ -125,8 +125,8 @@ class WeekForecast {
   private readonly kvpName: string;
   private readonly timeZone: string;
 
-  private season: Season = Season.Winter;
-  private dayNum: Week = Week.Sunday;
+  private season: Season = Season.WINTER;
+  private dayNum: Week = Week.SUNDAY;
   
   public data: WeatherForecast;
 

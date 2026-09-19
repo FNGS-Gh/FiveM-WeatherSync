@@ -1,42 +1,42 @@
 export enum Week {
-  Sunday,
-  Monday,
-  Tuesday,
-  Wednesday,
-  Thursday,
-  Friday,
-  Saturday
+  SUNDAY,
+  MONDAY,
+  TUESDAY,
+  WEDNESDAY,
+  THURSDAY,
+  FRIDAY,
+  SATURDAY
 }
 export type WeekDay = keyof typeof Week;
 
 export const WEEK_ORDER: WeekDay[] = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday'
+  'SUNDAY',
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY'
 ];
 
 export enum Season {
-  Winter,
-  Spring,
-  Summer,
-  Autumn
+  WINTER,
+  SPRING,
+  SUMMER,
+  AUTUMN
 }
 
 export enum WeatherBase {
-  Sunny,
-  Cloudy,
-  Foggy,
-  Other,
+  SUNNY,
+  CLOUDY,
+  FOGGY,
+  OTHER,
 }
 
 export enum WeatherModifier {
-  None    = 0,
-  Rainy   = 1 << 0,
-  Thunder = 1 << 1,
+  NONE    = 0,
+  RAINY   = 1 << 0,
+  THUNDER = 1 << 1,
 }
 
 export interface WeatherInstance {
@@ -88,7 +88,7 @@ export const getDayByTimeZone = (
   const dayName = date.toLocaleDateString(
     'en-US',
     { timeZone, weekday: 'long' }
-  ) as WeekDay;
+  ).toUpperCase() as WeekDay;
 
   return WEEK_ORDER.includes(dayName)
     ? Week[dayName]
@@ -99,8 +99,8 @@ export const applyWeatherModifier = (
   instance: WeatherInstance,
   modifier: WeatherModifier
 ): WeatherInstance => {
-  if (instance.base !== WeatherBase.Other)
-    instance.base = WeatherBase.Other;
+  if (instance.base !== WeatherBase.OTHER)
+    instance.base = WeatherBase.OTHER;
 
   instance.modifier = instance.modifier | modifier;
 
@@ -111,47 +111,47 @@ export const getDefaultForecast = (updatedAt: number, timeZone: string): Weather
   updatedAt,
   timeZone,
   schedule: {
-    Sunday: {
-      base: WeatherBase.Sunny,
-      modifier: WeatherModifier.None
+    SUNDAY: {
+      base: WeatherBase.SUNNY,
+      modifier: WeatherModifier.NONE
     },
-    Monday: {
-      base: WeatherBase.Sunny,
-      modifier: WeatherModifier.None
+    MONDAY: {
+      base: WeatherBase.SUNNY,
+      modifier: WeatherModifier.NONE
     },
-    Tuesday: {
-      base: WeatherBase.Sunny,
-      modifier: WeatherModifier.None
+    TUESDAY: {
+      base: WeatherBase.SUNNY,
+      modifier: WeatherModifier.NONE
     },
-    Wednesday: {
-      base: WeatherBase.Sunny,
-      modifier: WeatherModifier.None
+    WEDNESDAY: {
+      base: WeatherBase.SUNNY,
+      modifier: WeatherModifier.NONE
     },
-    Thursday: {
-      base: WeatherBase.Sunny,
-      modifier: WeatherModifier.None
+    THURSDAY: {
+      base: WeatherBase.SUNNY,
+      modifier: WeatherModifier.NONE
     },
-    Friday: {
-      base: WeatherBase.Sunny,
-      modifier: WeatherModifier.None
+    FRIDAY: {
+      base: WeatherBase.SUNNY,
+      modifier: WeatherModifier.NONE
     },
-    Saturday: {
-      base: WeatherBase.Sunny,
-      modifier: WeatherModifier.None
+    SATURDAY: {
+      base: WeatherBase.SUNNY,
+      modifier: WeatherModifier.NONE
     }
   }
 });
 
 const isValidWeatherInstance = (instance: unknown): instance is WeatherInstance => {
   const VALID_WEATHER_BASES = new Set<number>([
-    WeatherBase.Sunny,
-    WeatherBase.Cloudy,
-    WeatherBase.Foggy,
-    WeatherBase.Other
+    WeatherBase.SUNNY,
+    WeatherBase.CLOUDY,
+    WeatherBase.FOGGY,
+    WeatherBase.OTHER
   ]);
-  const MAX_MODIFIER_MASK = WeatherModifier.None
-    | WeatherModifier.Rainy
-    | WeatherModifier.Thunder;
+  const MAX_MODIFIER_MASK = WeatherModifier.NONE
+    | WeatherModifier.RAINY
+    | WeatherModifier.THUNDER;
   
   if (typeof instance !== 'object' || instance === null)
     return false;
