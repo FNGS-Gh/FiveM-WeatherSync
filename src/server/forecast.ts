@@ -1,4 +1,4 @@
-import { Config, SeasonChances } from './config';
+import { Config, SeasonChances, WeatherConfig } from './config';
 import {
   Week,
   WeekDay,
@@ -15,7 +15,11 @@ import {
   getDayByTimeZone,
   applyWeatherModifier,
   getDefaultForecast,
-  isValidForecast
+  isValidForecast,
+  getDefWeatherInstance,
+  getRandomRng,
+  shiftTemp,
+  getRandomRngInc
 } from './utils';
 
 // Module Functions
@@ -30,24 +34,30 @@ const getKvpForecast = (kvpName: string): WeatherForecast | null => {
         return tryForecast as WeatherForecast;
     }
   } catch (err) {
-    console.error('Corrupted Weather Forecast');
+    console.error(`Corrupted Weather Forecast | KVP: ${kvpName}`);
   }
 
   return null;
 };
 
-const getChancesSet = (season: Season): SeasonChances => {
-  let chancesSet: SeasonChances = Config.winterChances;
+const getChancesSet = (
+  season: Season,
+  config: WeatherConfig
+): SeasonChances => {
+  let chancesSet: SeasonChances;
 
   switch (season) {
     case Season.SPRING:
-      chancesSet = Config.springChances;
+      chancesSet = config.springSet;
       break;
     case Season.SUMMER:
-      chancesSet = Config.summerChances;
+      chancesSet = config.summerSet;
       break;
     case Season.AUTUMN:
-      chancesSet = Config.autumnChances;
+      chancesSet = config.autumnSet;
+      break;
+    default:
+      chancesSet = config.winterSet;
       break;
   }
 
@@ -56,17 +66,19 @@ const getChancesSet = (season: Season): SeasonChances => {
 
 const genInstanceBySeason = (
   chancesSet: SeasonChances,
-  rainAmplifier = 1.0
+  rainAmplifier = 1.0,
+  tempRng: number[]
 ): WeatherInstance => {
-  const instance: WeatherInstance = {
-    base: WeatherBase.SUNNY,
-    modifier: WeatherModifier.NONE
-  };
+  const instance = getDefWeatherInstance();
+  instance.temp = [...tempRng];
+
+  let toShift = genChance() > 0.6 ? -1 : 1;
 
   const rainChance = genChance(rainAmplifier);
   if (rainChance <= chancesSet.rain) {
     instance.base = WeatherBase.OTHER;
     applyWeatherModifier(instance, WeatherModifier.RAINY);
+    toShift -= getRandomRngInc(1, 4);
 
     const thunderChance = genChance();
     if (thunderChance <= chancesSet.thunder)
@@ -75,12 +87,19 @@ const genInstanceBySeason = (
     const cloudyChance = genChance();
     if (cloudyChance <= chancesSet.cloudy) {
       instance.base = WeatherBase.CLOUDY;
+      toShift--;
 
       const fogChance = genChance();
       if (fogChance <= chancesSet.fog)
         instance.base = WeatherBase.FOGGY;
-    }
+    } else toShift += 2;
   }
+
+  instance.temp = shiftTemp(
+    instance.temp,
+    toShift,
+    chancesSet.temp
+  );
 
   return instance;
 };
@@ -92,8 +111,16 @@ const getInstance = (
   const rainAmplifier = prevInstance?.base === WeatherBase.OTHER
     ? 1.25 : 1.0;
 
-  const chancesSet: SeasonChances = getChancesSet(season);
-  const instance = genInstanceBySeason(chancesSet, rainAmplifier);
+  const chancesSet: SeasonChances = getChancesSet(season, Config);
+  const tempRange: number[] = prevInstance?.temp
+    ? prevInstance.temp
+    : chancesSet.temp;
+
+  const instance = genInstanceBySeason(
+    chancesSet,
+    rainAmplifier,
+    tempRange
+  );
 
   return instance;
 };
@@ -179,6 +206,15 @@ class WeekForecast {
       }
     }
   
+    SetResourceKvp(this.kvpName, JSON.stringify(this.data));
+
+    return this.data;
+  }
+
+  public regenForecast(): WeatherForecast {
+    this.updateDate(new Date);
+    
+    this.data = genNewForecast(this.timeZone, this.season, this.dayNum);
     SetResourceKvp(this.kvpName, JSON.stringify(this.data));
 
     return this.data;

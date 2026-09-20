@@ -7,3 +7,5 @@ class WorldWeather {
 
   }
 }
+
+console.dir(Forecast.data);

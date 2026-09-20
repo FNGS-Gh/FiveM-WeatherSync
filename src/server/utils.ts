@@ -42,6 +42,7 @@ export enum WeatherModifier {
 export interface WeatherInstance {
   base: WeatherBase;
   modifier: WeatherModifier;
+  temp: number[];
 }
 
 export interface WeatherForecast {
@@ -53,11 +54,56 @@ export interface WeatherForecast {
 export const getRandomRng = (min: number, max: number) => {
   const minCeil = Math.ceil(min);
   const maxFloor = Math.floor(max);
-  return Math.floor(Math.random() * (maxFloor - minCeil + 1)) + minCeil;
+  return Math.floor(Math.random() * (maxFloor - minCeil) + minCeil);
+};
+
+export const getRandomRngInc = (min: number, max: number) => {
+  const minCeil = Math.ceil(min);
+  const maxFloor = Math.floor(max);
+  return Math.floor(Math.random() * (maxFloor - minCeil + 1) + minCeil);
 };
 
 export const genChance = (amplifier = 1.0): number => 
-  amplifier * (getRandomRng(1, 100) / 100);
+  amplifier * Math.random();
+
+export const getChanceBag = (
+  chance: number,
+  bagSize = 100
+): (() => boolean) => {
+  const validChance = chance > 0 && chance <= 1 ? chance : 0.01;
+  const length = bagSize >= 10 && Number.isInteger(Math.log10(bagSize))
+    ? bagSize : 100;
+  const successQty = Math.round(validChance * length);
+
+  const refillBag = (): boolean[] => {
+    const bag = Array.from({ length }, (_el, i) => i < successQty);
+
+    for (let i = bag.length - 1; i > 0; i--) {
+      const j = getRandomRng(0, i + 1);
+      [bag[i], bag[j]] = [bag[j], bag[i]];
+    }
+
+    return bag;
+  };
+
+  let bag = refillBag();
+
+  return () => {
+    if (bag.length === 0) bag = refillBag();
+    return bag.pop() as boolean;
+  };
+};
+
+export const shiftTemp = (
+  temp: number[],
+  toAdd: number,
+  range: number[]
+): number[] => {
+  const avgTemp = Math.floor((range[0] + range[1]) / 2);
+  const minTemp = Math.max(range[0], Math.min(avgTemp, temp[0] + toAdd));
+  const maxTemp = Math.max(avgTemp, Math.min(range[1], temp[1] + toAdd));
+  return [minTemp, maxTemp];
+};
 
 export const getSeason = (m: number): Season =>
   m >= 0 && m < 12
@@ -107,38 +153,23 @@ export const applyWeatherModifier = (
   return instance;
 };
 
+export const getDefWeatherInstance = () => ({
+  base: WeatherBase.SUNNY,
+  modifier: WeatherModifier.NONE,
+  temp: [0, 25]
+});
+
 export const getDefaultForecast = (updatedAt: number, timeZone: string): WeatherForecast => ({
   updatedAt,
   timeZone,
   schedule: {
-    SUNDAY: {
-      base: WeatherBase.SUNNY,
-      modifier: WeatherModifier.NONE
-    },
-    MONDAY: {
-      base: WeatherBase.SUNNY,
-      modifier: WeatherModifier.NONE
-    },
-    TUESDAY: {
-      base: WeatherBase.SUNNY,
-      modifier: WeatherModifier.NONE
-    },
-    WEDNESDAY: {
-      base: WeatherBase.SUNNY,
-      modifier: WeatherModifier.NONE
-    },
-    THURSDAY: {
-      base: WeatherBase.SUNNY,
-      modifier: WeatherModifier.NONE
-    },
-    FRIDAY: {
-      base: WeatherBase.SUNNY,
-      modifier: WeatherModifier.NONE
-    },
-    SATURDAY: {
-      base: WeatherBase.SUNNY,
-      modifier: WeatherModifier.NONE
-    }
+    SUNDAY: getDefWeatherInstance(),
+    MONDAY: getDefWeatherInstance(),
+    TUESDAY: getDefWeatherInstance(),
+    WEDNESDAY: getDefWeatherInstance(),
+    THURSDAY: getDefWeatherInstance(),
+    FRIDAY: getDefWeatherInstance(),
+    SATURDAY: getDefWeatherInstance()
   }
 });
 
@@ -156,7 +187,7 @@ const isValidWeatherInstance = (instance: unknown): instance is WeatherInstance 
   if (typeof instance !== 'object' || instance === null)
     return false;
 
-  const { base, modifier } = instance as Record<string, unknown>;
+  const { base, modifier, temp } = instance as Record<string, unknown>;
 
   if (
     typeof base !== 'number'
@@ -168,6 +199,13 @@ const isValidWeatherInstance = (instance: unknown): instance is WeatherInstance 
     || !Number.isInteger(modifier) 
     || modifier < 0 
     || (modifier & ~MAX_MODIFIER_MASK) !== 0
+  ) return false;
+
+  if (
+    typeof temp !== 'object'
+    || !Array.isArray(temp)
+    || temp.length !== 2
+    || temp[0] > temp[1]
   ) return false;
 
   return true;
