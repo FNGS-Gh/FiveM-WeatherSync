@@ -9,18 +9,24 @@ export interface SeasonChances {
   fog: number;
   rain: number;
   thunder: number;
+  temp: number[];
 }
 
-interface WeatherConfig {
+export interface WeatherConfig {
   kvpName: string;
   timeZone: string;
   accurracy: number;
   allowSnow: boolean;
   snowXmas: boolean;
-  winterChances: SeasonChances;
-  springChances: SeasonChances;
-  summerChances: SeasonChances;
-  autumnChances: SeasonChances;
+  fixedWeatherOnFrozen: boolean;
+  noRainOnFrozen: boolean;
+  tempCelsius: boolean;
+  gameUpdRng: number[];
+  modifierDurRng: number[];
+  winterSet: SeasonChances;
+  springSet: SeasonChances;
+  summerSet: SeasonChances;
+  autumnSet: SeasonChances;
 }
 
 // NOTE: Don't change this object. Change only the 'config.json' outter file.
@@ -31,29 +37,38 @@ const DEFAULT_CONFIG: WeatherConfig = {
   accurracy: 0.75,
   allowSnow: false,
   snowXmas: true,
-  winterChances: {
+  fixedWeatherOnFrozen: false,
+  noRainOnFrozen: false,
+  tempCelsius: true,
+  gameUpdRng: [20, 90],
+  modifierDurRng: [15, 60],
+  winterSet: {
     cloudy: 0.25,
     fog: 0.3,
     rain: 0.25,
-    thunder: 0.05
+    thunder: 0.05,
+    temp: [4, 16]
   },
-  springChances: {
+  springSet: {
     cloudy: 0.1,
     fog: 0.2,
     rain: 0.3,
-    thunder: 0.2
+    thunder: 0.2,
+    temp: [11, 25]
   },
-  summerChances: {
+  summerSet: {
     cloudy: 0.05,
     fog: 0.25,
     rain: 0.4,
-    thunder: 0.5
+    thunder: 0.5,
+    temp: [18, 36]
   },
-  autumnChances: {
+  autumnSet: {
     cloudy: 0.35,
     fog: 0.55,
     rain: 0.45,
-    thunder: 0.45
+    thunder: 0.45,
+    temp: [9, 23]
   }
 } as const;
 
@@ -82,7 +97,7 @@ const loadConfig = (): WeatherConfig => {
     if (!isWeatherConfig(rawConfig))
       return configError();
 
-    return rawConfig;
+    return rawConfig as WeatherConfig;
   } catch (err) {
     return configError();
   }
