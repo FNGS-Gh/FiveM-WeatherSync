@@ -1,5 +1,9 @@
 import { Config, SeasonChances, WeatherConfig } from './config';
 import {
+  genChance,
+  getRandomRngInc
+} from './utils';
+import {
   Week,
   WeekDay,
   WEEK_ORDER,
@@ -8,18 +12,16 @@ import {
   WeatherModifier,
   WeatherInstance,
   WeatherForecast,
-  genChance,
+  shiftTemp,
   getSeason,
   validateTimezone,
   getMonth,
   getWeekDay,
   applyWeatherModifier,
-  getDefaultForecast,
-  isValidForecast,
   getDefWeatherInstance,
-  shiftTemp,
-  getRandomRngInc
-} from './utils';
+  getDefaultForecast,
+  isValidForecast
+} from './forecast_utils';
 
 // Module Functions
 const getKvpForecast = (kvpName: string): WeatherForecast | null => {

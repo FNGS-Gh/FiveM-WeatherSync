@@ -3,14 +3,16 @@ import { Config } from './config';
 import { WeekForecast, Forecast } from './forecast';
 import {
   genChance,
-  getChanceBag,
   getRandomRng,
   getRandomRngInc,
-  WeatherBase,
-  WeatherInstance,
-  WeatherModifier,
-  WEEK_ORDER,
+  getChanceBag
 } from './utils';
+import {
+  WEEK_ORDER,
+  WeatherBase,
+  WeatherModifier,
+  WeatherInstance,
+} from './forecast_utils'
 
 const LONG_M_SEQ: Record<string, RainSequence[]> = {
   RAINY: [

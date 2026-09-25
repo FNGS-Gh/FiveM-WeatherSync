@@ -1,8 +1,8 @@
 import {
-  InitPayload,
-  SyncPayload,
   WEATHER_TYPES,
-  WeatherType
+  WeatherType,
+  SyncPayload,
+  InitPayload
 } from '../shared/utils';
 
 const FADE_TIME_S = 10; // Seconds it takes to transition to new weather
