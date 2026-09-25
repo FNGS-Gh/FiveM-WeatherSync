@@ -11,8 +11,8 @@ import {
   genChance,
   getSeason,
   validateTimezone,
-  getMonthByTimeZone,
-  getDayByTimeZone,
+  getMonth,
+  getWeekDay,
   applyWeatherModifier,
   getDefaultForecast,
   isValidForecast,
@@ -148,13 +148,13 @@ const genNewForecast = (
 };
 
 // Main Class
-class WeekForecast {
+export class WeekForecast {
   private readonly kvpName: string;
   private readonly timeZone: string;
-
-  private season: Season = Season.WINTER;
-  private dayNum: Week = Week.SUNDAY;
   
+  public readonly formatter: Intl.DateTimeFormat;
+  public season: Season = Season.WINTER;
+  public dayNum: Week = Week.SUNDAY;
   public data: WeatherForecast;
 
   constructor(
@@ -164,12 +164,24 @@ class WeekForecast {
   ) {
     this.kvpName = kvpName;
     this.timeZone = validateTimezone(timeZone);
+
+    this.formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: this.timeZone,
+      month: 'numeric',
+      weekday: 'long',
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric',
+      fractionalSecondDigits: 3,
+      hour12: false,
+    });
+
     this.updateDate(new Date);
 
     if (kvpForecast && kvpForecast.timeZone === this.timeZone) {
-      const forecastDay = getDayByTimeZone(
+      const forecastDay = getWeekDay(
         new Date(kvpForecast.updatedAt),
-        this.timeZone
+        this.formatter
       );
 
       this.data = kvpForecast;
@@ -182,10 +194,10 @@ class WeekForecast {
   }
 
   private updateDate(date: Date) {
-    const dateDay = getDayByTimeZone(date, this.timeZone);
+    const dateDay = getWeekDay(date, this.formatter);
     this.dayNum = Math.max(0, Math.min(6, dateDay));
 
-    const dateMonth = getMonthByTimeZone(date, this.timeZone);
+    const dateMonth = getMonth(date, this.formatter);
     const monthNum = Math.max(0, Math.min(11, dateMonth));
     this.season = getSeason(monthNum);
   }

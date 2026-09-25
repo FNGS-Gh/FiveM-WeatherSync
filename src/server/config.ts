@@ -21,7 +21,8 @@ export interface WeatherConfig {
   fixedWeatherOnFrozen: boolean;
   noRainOnFrozen: boolean;
   tempCelsius: boolean;
-  snowTemp: number[];
+  gameUpdRng: number[];
+  modifierDurRng: number[];
   winterSet: SeasonChances;
   springSet: SeasonChances;
   summerSet: SeasonChances;
@@ -39,7 +40,8 @@ const DEFAULT_CONFIG: WeatherConfig = {
   fixedWeatherOnFrozen: false,
   noRainOnFrozen: false,
   tempCelsius: true,
-  snowTemp: [-7, 1],
+  gameUpdRng: [20, 90],
+  modifierDurRng: [15, 60],
   winterSet: {
     cloudy: 0.25,
     fog: 0.3,

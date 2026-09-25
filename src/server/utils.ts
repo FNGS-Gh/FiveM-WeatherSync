@@ -76,7 +76,7 @@ export const getChanceBag = (
   const successQty = Math.round(validChance * length);
 
   const refillBag = (): boolean[] => {
-    const bag = Array.from({ length }, (_el, i) => i < successQty);
+    const bag = Array.from({ length }, (_, i) => i < successQty);
 
     for (let i = bag.length - 1; i > 0; i--) {
       const j = getRandomRng(0, i + 1);
@@ -115,30 +115,53 @@ export const validateTimezone = (timeZone: string): string => {
     Intl.DateTimeFormat(undefined, { timeZone });
     return timeZone;
   } catch {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone;;
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
   }
 };
 
-export const getMonthByTimeZone = (
-  date: Date,
-  timeZone: string
-): number => parseInt(
-  date.toLocaleDateString('en-US', { timeZone, month: 'numeric' }),
-  10
-) - 1;
+// export const getMonthByTimeZone = (
+//   date: Date,
+//   timeZone: string
+// ): number => parseInt(
+//   date.toLocaleDateString('en-US', { timeZone, month: 'numeric' }),
+//   10
+// ) - 1;
 
-export const getDayByTimeZone = (
+// export const getDayByTimeZone = (
+//   date: Date,
+//   timeZone: string
+// ): Week => {
+//   const dayName = date.toLocaleDateString(
+//     'en-US',
+//     { timeZone, weekday: 'long' }
+//   ).toUpperCase() as WeekDay;
+
+//   return WEEK_ORDER.includes(dayName)
+//     ? Week[dayName]
+//     : 0;
+// };
+
+export const getMonth = (
   date: Date,
-  timeZone: string
+  formatter: Intl.DateTimeFormat
+): number => {
+  const parts = formatter.formatToParts(date);
+  const monthPart = parts.find(p => p.type === 'month');
+  return monthPart?.value
+    ? parseInt(monthPart.value, 10) - 1
+    : 0;
+};
+
+export const getWeekDay = (
+  date: Date,
+  formatter: Intl.DateTimeFormat
 ): Week => {
-  const dayName = date.toLocaleDateString(
-    'en-US',
-    { timeZone, weekday: 'long' }
-  ).toUpperCase() as WeekDay;
-
-  return WEEK_ORDER.includes(dayName)
-    ? Week[dayName]
-    : 0
+  const parts = formatter.formatToParts(date);
+  const dayPart = parts.find(p => p.type === 'weekday');
+  const dayName = dayPart?.value
+    ? dayPart?.value.toUpperCase() as WeekDay
+    : WEEK_ORDER[0] as WeekDay;
+  return WEEK_ORDER.includes(dayName) ? Week[dayName] : 0;
 };
 
 export const applyWeatherModifier = (
