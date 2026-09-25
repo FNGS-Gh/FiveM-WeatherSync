@@ -46,6 +46,8 @@ const applyWeather = (payload: SyncPayload, instant = false) => {
   else SetWeatherTypeOvertimePersist(weather, FADE_TIME_S);
 };
 
+// TO DO: Snow
+
 onNet('Weather:Init', (payload: InitPayload) => {
   emit('Weather:InitTZ', payload.timeZone);
 

@@ -1,4 +1,4 @@
-import { CLOUDY_SET, FOGGY_SET, InitPayload, RainSequence, SUNNY_SET, SyncPayload, WeatherType } from '../shared/utils';
+import { CLOUDY_SET, FOGGY_SET, InitPayload, RainSequence, SUNNY_SET, SyncPayload, WEATHER_TYPES, WeatherType } from '../shared/utils';
 import { Config } from './config';
 import { WeekForecast, Forecast } from './forecast';
 import {
@@ -57,7 +57,7 @@ const SUNSET_SECONDS = 72000;   // 20:00 in-game sunset time (20.0 * 3600)
 const TEMP_PEAK = 45000;        // 12:30 in-game ((5.5 + 20.0) / 2 ~= 12.75 => 12.5 * 3600)
 const TEMP_LOW = 59400;         // 16:30 in-game ((12.5 + 20.0) / 2 ~= 16.25 => 16.5 * 3600)
 
-const PUDDLES_MS = 70000;       // Rain puddles remain for around 1:10 minutes after the rain has stopped
+//const PUDDLES_MS = 70000;       // Rain puddles remain for around 1:10 minutes after the rain has stopped
 
 const getInitTemp = (
   timeMS: number,
@@ -174,6 +174,13 @@ class WorldWeather {
 
   private canDoModifier: (() => boolean) = () => false;
 
+  private clearTimeout() {
+    if (this.dayTimeout) {
+      clearTimeout(this.dayTimeout);
+      this.dayTimeout = null;
+    }
+  }
+
   private getRandomType(): WeatherType {
     const arr = Array.from(this.currSet);
     return arr[getRandomRng(0, arr.length)];
@@ -210,10 +217,7 @@ class WorldWeather {
   }
 
   private scheduleDayEnd() {
-    if (this.dayTimeout) {
-      clearTimeout(this.dayTimeout);
-      this.dayTimeout = null;
-    }
+    this.clearTimeout();
 
     const inMS = getUntilDayEndMS(new Date, this.forecast.formatter);
 
@@ -227,10 +231,7 @@ class WorldWeather {
   }
 
   private scheduleUpdate() {
-    if (this.updTimeout) {
-      clearTimeout(this.updTimeout);
-      this.updTimeout = null;
-    }
+    this.clearTimeout();
 
     const inMinutes = getRandomRngInc(Config.gameUpdRng[0], Config.gameUpdRng[1]);
     const inMS = inMinutes * 60000;
@@ -302,7 +303,7 @@ class WorldWeather {
 
     console.dir(testPaylod);
 
-    // emit on clients + check snow
+    // TO DO: check snow
     emitNet('Weather:Sync', -1, this.getSyncPayload());
   }
   
@@ -312,10 +313,7 @@ class WorldWeather {
     seqQueue: RainSequence[],
     idx = 0
   ) {
-    if (this.updTimeout) {
-      clearTimeout(this.updTimeout);
-      this.updTimeout = null;
-    }
+    this.clearTimeout();
 
     if (idx >= seqQueue.length) {
       const newType = this.getRandomType();
@@ -343,14 +341,45 @@ class WorldWeather {
     this.nextInMS = startIn;
 
     this.updTimeout = setTimeout(() => {
-      if (this.updTimeout) {
-        clearTimeout(this.updTimeout);
-        this.updTimeout = null;
-      }
-
       this.updateWeather(type, true);
       this.runRainSeq(nextStartIn, totalDur, seqQueue, idx + 1);
     }, startIn);
+  }
+
+  public setWeather(type: WeatherType, timeM?: number) {
+    if (!WEATHER_TYPES.includes(type)) {
+      // Error notification
+      return;
+    }
+
+    this.clearTimeout();
+
+    if (this.rainDurM !== -1) {
+      this.rainDurM = -1;
+
+      const gameMS: number = globalThis.exports['FiveM-TimeSync'].GetTime();
+      this.updateTemp(gameMS, 2);
+    }
+
+    this.next = null;
+    this.nextInMS = 0;
+    this.current = type;
+
+    emitNet('Weather:Sync', -1, this.getSyncPayload());
+
+    if (timeM) this.updTimeout = setTimeout(() => {
+      this.resetWeather();
+    }, timeM * 60000);
+  }
+
+  public resetWeather() {
+    this.currSet = getWeatherSet(this.base);
+    this.current = this.getRandomType();
+    this.currSet.delete(this.current);
+
+    this.scheduleUpdate();
+
+    emitNet('Weather:Sync', -1, this.getSyncPayload());
   }
 
   public getInitPayload(): InitPayload {
