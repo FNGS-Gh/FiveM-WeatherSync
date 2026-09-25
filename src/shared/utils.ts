@@ -27,7 +27,6 @@ export const SUNNY_SET: WeatherType[] = [
 
 export const CLOUDY_SET: WeatherType[] = [
   "CLOUDS",
-  "OVERCAST",
   "SMOG"
 ] as const;
 
@@ -44,4 +43,15 @@ export const SNOW_MAP: Partial<Record<WeatherType, WeatherType>> = {
 export interface RainSequence {
   readonly durMult: number;
   readonly type: WeatherType;
+}
+
+export interface SyncPayload {
+  weather: WeatherType;
+  temp: number;
+  next: WeatherType | null;
+  nextInMS: number;
+}
+
+export interface InitPayload extends SyncPayload {
+  timeZone: string;
 }

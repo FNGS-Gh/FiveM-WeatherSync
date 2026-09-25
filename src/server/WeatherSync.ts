@@ -1,4 +1,4 @@
-import { CLOUDY_SET, FOGGY_SET, RainSequence, SUNNY_SET, WeatherType } from '../shared/utils';
+import { CLOUDY_SET, FOGGY_SET, InitPayload, RainSequence, SUNNY_SET, SyncPayload, WeatherType } from '../shared/utils';
 import { Config } from './config';
 import { WeekForecast, Forecast } from './forecast';
 import {
@@ -6,14 +6,10 @@ import {
   getChanceBag,
   getRandomRng,
   getRandomRngInc,
-  Season,
   WeatherBase,
-  WeatherForecast,
   WeatherInstance,
   WeatherModifier,
-  Week,
   WEEK_ORDER,
-  WeekDay
 } from './utils';
 
 const LONG_M_SEQ: Record<string, RainSequence[]> = {
@@ -58,6 +54,8 @@ const SUNSET_SECONDS = 72000;   // 20:00 in-game sunset time (20.0 * 3600)
 
 const TEMP_PEAK = 45000;        // 12:30 in-game ((5.5 + 20.0) / 2 ~= 12.75 => 12.5 * 3600)
 const TEMP_LOW = 59400;         // 16:30 in-game ((12.5 + 20.0) / 2 ~= 16.25 => 16.5 * 3600)
+
+const PUDDLES_MS = 70000;       // Rain puddles remain for around 1:10 minutes after the rain has stopped
 
 const getInitTemp = (
   timeMS: number,
@@ -146,8 +144,6 @@ class WorldWeather {
 
   public current: WeatherType;
   public temp: number;
-  public wind: number;
-  public lastRainMS = 0;
   public next: WeatherType | null = null;
   public nextInMS = 0;
   public rainDurM = -1;
@@ -166,9 +162,6 @@ class WorldWeather {
     const inGameMS: number = globalThis
       .exports['FiveM-TimeSync'].GetTime();
     this.temp = getInitTemp(inGameMS, this.tempAvg, this.tempRng);
-    this.wind = 0.5 <= this.temp / this.tempRng[1]
-      ? getRandomRngInc(7, 12)
-      : getRandomRngInc(1, 6);
 
     this.current = this.getRandomType();
     this.currSet.delete(this.current);
@@ -196,6 +189,9 @@ class WorldWeather {
     this.modifier = this.instance.modifier;
     this.currSet = getWeatherSet(this.base);
 
+    if (this.current && this.currSet.has(this.current))
+      this.currSet.delete(this.current);
+
     this.canDoModifier = getChanceBag(Config.accurracy, 10);
   }
 
@@ -209,14 +205,6 @@ class WorldWeather {
         this.temp = Math.min(this.tempRng[1], this.temp + 1);
       else this.temp = Math.max(this.tempRng[0], this.temp - 2);
     } else this.temp = parseTemp(this.temp + extra, this.tempRng);
-  }
-
-  private updateWind(extra?: number) {
-    if (extra === undefined) {
-      if (genChance() <= 0.5)
-        this.wind = Math.max(1, Math.min(12, this.wind + 1));
-      else this.wind = Math.max(1, Math.min(12, this.wind - 1));
-    } else this.wind = Math.max(1, Math.min(12, this.wind + extra));
   }
 
   private scheduleDayEnd() {
@@ -241,8 +229,6 @@ class WorldWeather {
       clearTimeout(this.updTimeout);
       this.updTimeout = null;
     }
-
-    this.updateWind();
 
     const inMinutes = getRandomRngInc(Config.gameUpdRng[0], Config.gameUpdRng[1]);
     const inMS = inMinutes * 60000;
@@ -301,7 +287,21 @@ class WorldWeather {
       this.currSet.add(this.current);
 
     this.current = type;
+
+    const testPaylod = {
+      current: this.current,
+      natural,
+      temp: this.temp,
+      set: Array.from(this.currSet),
+      rainDur: this.rainDurM,
+      next: this.next,
+      nextIn: this.nextInMS,
+    };
+
+    console.dir(testPaylod);
+
     // emit on clients + check snow
+    emitNet('Weather:Sync', -1, this.getSyncPayload());
   }
   
   private runRainSeq(
@@ -321,11 +321,13 @@ class WorldWeather {
       this.next = newType;
       this.nextInMS = startIn;
 
+      this.rainDurM = -1;
+
       const gameMS: number = globalThis.exports['FiveM-TimeSync'].GetTime();
       this.updateTemp(gameMS, 2);
 
       this.updTimeout = setTimeout(() => {
-        this.updateWeather(newType);
+        this.updateWeather(newType, true);
         this.scheduleUpdate();
       }, startIn);
 
@@ -348,7 +350,28 @@ class WorldWeather {
       this.runRainSeq(nextStartIn, totalDur, seqQueue, idx + 1);
     }, startIn);
   }
+
+  public getInitPayload(): InitPayload {
+    return {
+      timeZone: this.forecast.data.timeZone,
+      ...this.getSyncPayload()
+    };
+  }
+
+  public getSyncPayload(): SyncPayload {
+    return {
+      weather: this.current,
+      temp: this.temp,
+      next: this.next,
+      nextInMS: this.nextInMS,
+    };
+  }
 }
 
 console.dir(Forecast.data);
 const WeatherSync = new WorldWeather(Forecast);
+
+onNet('Weather:RequestInit', () => {
+  const src = source;
+  emitNet('Weather:Init', src, WeatherSync.getInitPayload());
+});

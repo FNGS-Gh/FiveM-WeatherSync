@@ -17,7 +17,6 @@ import {
   getDefaultForecast,
   isValidForecast,
   getDefWeatherInstance,
-  getRandomRng,
   shiftTemp,
   getRandomRngInc
 } from './utils';
