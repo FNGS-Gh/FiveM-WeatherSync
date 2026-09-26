@@ -166,6 +166,7 @@ class WorldWeather {
   public next: WeatherType | null = null;
   public nextInMS = 0;
   public rainDurM = -1;
+  public customNow = false;
 
   constructor(forecast: WeekForecast) {
     this.forecast = forecast;
@@ -360,6 +361,7 @@ class WorldWeather {
       this.temp = parseTemp(this.temp + 2, this.tempRng);
     }
 
+    this.customNow = true;
     this.next = null;
     this.nextInMS = 0;
     this.current = type;
@@ -372,6 +374,7 @@ class WorldWeather {
   }
 
   public resetWeather() {
+    this.customNow = false;
     this.currSet = getWeatherSet(this.base);
     this.current = this.getRandomType();
     this.currSet.delete(this.current);
@@ -406,6 +409,7 @@ onNet('Weather:RequestInit', () => {
   emitNet('Weather:Init', src, WeatherSync.getInitPayload());
 });
 
+globalThis.exports('IsCustomNow', () => WeatherSync.customNow);
 globalThis.exports('ResetWeather', () => WeatherSync.resetWeather());
 globalThis.exports(
   'SetWeather',

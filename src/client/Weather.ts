@@ -5,7 +5,7 @@ import {
   InitPayload
 } from '../shared/utils';
 
-const FADE_TIME_S = 10; // Seconds it takes to transition to new weather
+const FADE_TIME_S = 30; // Seconds it takes to transition to new weather
 
 const validateWeather = (
   tryWeather: WeatherType,
