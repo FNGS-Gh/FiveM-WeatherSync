@@ -5,7 +5,7 @@ import {
   InitPayload
 } from '../shared/utils';
 
-const FADE_TIME_S = 10; // Seconds it takes to transition to new weather
+const FADE_TIME_S = 30; // Seconds it takes to transition to new weather
 
 const validateWeather = (
   tryWeather: WeatherType,
@@ -45,6 +45,8 @@ const applyWeather = (payload: SyncPayload, instant = false) => {
   if (instant) SetWeatherTypeNowPersist(weather);
   else SetWeatherTypeOvertimePersist(weather, FADE_TIME_S);
 };
+
+// TO DO: Snow
 
 onNet('Weather:Init', (payload: InitPayload) => {
   emit('Weather:InitTZ', payload.timeZone);
