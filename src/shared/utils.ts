@@ -54,4 +54,5 @@ export interface SyncPayload {
 
 export interface InitPayload extends SyncPayload {
   timeZone: string;
+  isSnow: boolean;
 }

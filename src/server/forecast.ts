@@ -15,6 +15,7 @@ import {
   shiftTemp,
   getSeason,
   validateTimezone,
+  getDay,
   getMonth,
   getWeekDay,
   applyWeatherModifier,
@@ -23,7 +24,25 @@ import {
   isValidForecast
 } from './forecast_utils';
 
+const [SNOW_START_M, SNOW_START_D] = Config.snowStart.split('/')
+  .map(e => parseInt(e, 10));
+const [SNOW_STOP_M, SNOW_STOP_D] = Config.snowStop.split('/')
+  .map(e => parseInt(e, 10));
+
 // Module Functions
+const isSnowDate = (month: number, day: number): boolean => {
+  if (!Config.allowSnow || !Config.snowXmas) return false;
+
+  if (month === SNOW_START_M) {
+    if (SNOW_START_M === SNOW_STOP_M)
+      return day >= SNOW_START_D && day <= SNOW_STOP_D;
+    return day >= SNOW_START_D;
+  }
+  if (month === SNOW_STOP_M) return day <= SNOW_STOP_D;
+
+  return false;
+};
+
 const getKvpForecast = (kvpName: string): WeatherForecast | null => {
   try {
     const rawForecast = GetResourceKvpString(kvpName);
@@ -156,6 +175,7 @@ export class WeekForecast {
   public readonly formatter: Intl.DateTimeFormat;
   public season: Season = Season.WINTER;
   public dayNum: Week = Week.SUNDAY;
+  public isSnow: boolean = false;
   public data: WeatherForecast;
 
   constructor(
@@ -168,6 +188,7 @@ export class WeekForecast {
 
     this.formatter = new Intl.DateTimeFormat('en-US', {
       timeZone: this.timeZone,
+      day: 'numeric',
       month: 'numeric',
       weekday: 'long',
       hour: 'numeric',
@@ -177,7 +198,7 @@ export class WeekForecast {
       hour12: false,
     });
 
-    this.updateDate(new Date);
+    this.updateDate(new Date, true);
 
     if (kvpForecast && kvpForecast.timeZone === this.timeZone) {
       const forecastDay = getWeekDay(
@@ -194,13 +215,16 @@ export class WeekForecast {
     }
   }
 
-  private updateDate(date: Date) {
-    const dateDay = getWeekDay(date, this.formatter);
-    this.dayNum = Math.max(0, Math.min(6, dateDay));
+  private updateDate(date: Date, checkSnow = false) {
+    const dateWeekDay = getWeekDay(date, this.formatter);
+    this.dayNum = Math.max(0, Math.min(6, dateWeekDay));
 
     const dateMonth = getMonth(date, this.formatter);
-    const monthNum = Math.max(0, Math.min(11, dateMonth));
+    const monthNum = Math.max(0, Math.min(11, dateMonth - 1));
     this.season = getSeason(monthNum);
+
+    if (checkSnow)
+      this.isSnow = isSnowDate(dateMonth, getDay(date, this.formatter));
   }
 
   public updateForecast(): WeatherForecast {

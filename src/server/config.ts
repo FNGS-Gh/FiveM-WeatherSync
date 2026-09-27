@@ -16,8 +16,11 @@ export interface WeatherConfig {
   kvpName: string;
   timeZone: string;
   accurracy: number;
+  allowMisc: boolean;
   allowSnow: boolean;
   snowXmas: boolean;
+  snowStart: string;
+  snowStop: string;
   fixedWeatherOnFrozen: boolean;
   noRainOnFrozen: boolean;
   tempCelsius: boolean;
@@ -35,8 +38,11 @@ const DEFAULT_CONFIG: WeatherConfig = {
   kvpName: 'weather_forecast',
   timeZone: 'Europe/London',
   accurracy: 0.75,
-  allowSnow: false,
+  allowMisc: false,
+  allowSnow: true,
   snowXmas: true,
+  snowStart: '12/20',
+  snowStop: '01/05',
   fixedWeatherOnFrozen: false,
   noRainOnFrozen: false,
   tempCelsius: true,

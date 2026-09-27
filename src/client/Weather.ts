@@ -2,27 +2,39 @@ import {
   WEATHER_TYPES,
   WeatherType,
   SyncPayload,
-  InitPayload
+  InitPayload,
+  SNOW_MAP
 } from '../shared/utils';
 
 const FADE_TIME_S = 30; // Seconds it takes to transition to new weather
 
+let snowApplied = false;
+
 const validateWeather = (
   tryWeather: WeatherType,
-  tryNext: WeatherType
-): Record<string, WeatherType> => {
-  let weather = tryWeather;
-  if (!WEATHER_TYPES.includes(tryWeather)) {
+  tryNext: WeatherType | null
+): { weather: WeatherType, next: WeatherType | null } => {
+  let weather = snowApplied
+    ? SNOW_MAP[tryWeather] ?? tryWeather
+    : tryWeather;
+
+  if (!WEATHER_TYPES.includes(weather)) {
     weather = WEATHER_TYPES[0];
     // Notify player
-    console.log(`^1ERROR: Init weather type is non-existent (${tryWeather})`);
+    console.log(`^1ERROR: Weather type is non-existent (${tryWeather}/${weather})`);
   }
-
+  
   let next = tryNext;
-  if (!WEATHER_TYPES.includes(tryNext)) {
-    next = WEATHER_TYPES[0];
-    // Notify player
-    console.log(`^1ERROR: Init NEXT weather type is non-existent (${tryNext})`);
+
+  if (next) {
+    if (snowApplied)
+      next = SNOW_MAP[next] ?? next;
+
+    if (!WEATHER_TYPES.includes(next)) {
+      next = WEATHER_TYPES[0];
+      // Notify player
+      console.log(`^1ERROR: NEXT weather type is non-existent (${tryNext}/${next})`);
+    }
   }
 
   return { weather, next };
@@ -31,7 +43,7 @@ const validateWeather = (
 const applyWeather = (payload: SyncPayload, instant = false) => {
   const { weather, next } = validateWeather(
     payload.weather,
-    payload.next ? payload.next : WEATHER_TYPES[0]
+    payload.next,
   );
 
   emit(
@@ -46,10 +58,22 @@ const applyWeather = (payload: SyncPayload, instant = false) => {
   else SetWeatherTypeOvertimePersist(weather, FADE_TIME_S);
 };
 
-// TO DO: Snow
-
 onNet('Weather:Init', (payload: InitPayload) => {
   emit('Weather:InitTZ', payload.timeZone);
+
+  snowApplied = payload.isSnow;
+
+  if (payload.isSnow) {
+    SetSnowLevel(1.0);
+    SetForcePedFootstepsTracks(true);
+    SetForceVehicleTrails(true);
+    RequestNamedPtfxAsset('core_snow');
+  } else {
+    SetSnowLevel(0.0);
+    SetForcePedFootstepsTracks(false);
+    SetForceVehicleTrails(false);
+    RemoveNamedPtfxAsset('core_snow');
+  }
 
   applyWeather({
     weather: payload.weather,

@@ -76,15 +76,22 @@ export const validateTimezone = (timeZone: string): string => {
   }
 };
 
+export const getDay = (
+  date: Date,
+  formatter: Intl.DateTimeFormat
+): number => {
+  const parts = formatter.formatToParts(date);
+  const dayPart = parts.find(p => p.type === 'day');
+  return dayPart?.value ? parseInt(dayPart.value, 10) : 1;
+};
+
 export const getMonth = (
   date: Date,
   formatter: Intl.DateTimeFormat
 ): number => {
   const parts = formatter.formatToParts(date);
   const monthPart = parts.find(p => p.type === 'month');
-  return monthPart?.value
-    ? parseInt(monthPart.value, 10) - 1
-    : 0;
+  return monthPart?.value ? parseInt(monthPart.value, 10) : 1;
 };
 
 export const getWeekDay = (

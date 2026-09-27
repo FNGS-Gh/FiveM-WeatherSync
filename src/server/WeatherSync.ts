@@ -146,6 +146,9 @@ const getWeatherSet = (base: WeatherBase): Set<WeatherType> => {
   }
 };
 
+
+
+// Main Class
 class WorldWeather {
   private readonly forecast: WeekForecast;
   private readonly rainDurRng: number[];
@@ -192,10 +195,10 @@ class WorldWeather {
 
   private canDoModifier: (() => boolean) = () => false;
 
-  private clearTimeout() {
-    if (this.dayTimeout) {
-      clearTimeout(this.dayTimeout);
-      this.dayTimeout = null;
+  private clearUpdTimeout() {
+    if (this.updTimeout) {
+      clearTimeout(this.updTimeout);
+      this.updTimeout = null;
     }
   }
 
@@ -223,7 +226,10 @@ class WorldWeather {
   }
 
   private scheduleDayEnd() {
-    this.clearTimeout();
+    if (this.dayTimeout) {
+      clearTimeout(this.dayTimeout);
+      this.dayTimeout = null;
+    }
 
     const inMS = getUntilDayEndMS(new Date, this.forecast.formatter);
 
@@ -237,7 +243,7 @@ class WorldWeather {
   }
 
   private scheduleUpdate() {
-    this.clearTimeout();
+    this.clearUpdTimeout();
 
     const inMinutes = getRandomRngInc(Config.gameUpdRng[0], Config.gameUpdRng[1]);
     const inMS = inMinutes * 60000;
@@ -304,10 +310,8 @@ class WorldWeather {
       next: this.next,
       nextIn: this.nextInMS,
     };
-
     console.dir(testPaylod);
 
-    // TO DO: check snow
     emitNet('Weather:Sync', -1, this.getSyncPayload());
   }
   
@@ -317,7 +321,7 @@ class WorldWeather {
     seqQueue: RainSequence[],
     idx = 0
   ) {
-    this.clearTimeout();
+    this.clearUpdTimeout();
 
     if (idx >= seqQueue.length) {
       const newType = this.getRandomType();
@@ -351,10 +355,11 @@ class WorldWeather {
   public setWeather(type: WeatherType, timeM?: number) {
     if (!WEATHER_TYPES.includes(type)) {
       // Error notification
+      console.log(`^1ERROR: Weather type is non-existent (${type})`);
       return;
     }
 
-    this.clearTimeout();
+    this.clearUpdTimeout();
 
     if (this.rainDurM !== -1) {
       this.rainDurM = -1;
@@ -387,6 +392,7 @@ class WorldWeather {
   public getInitPayload(): InitPayload {
     return {
       timeZone: this.forecast.data.timeZone,
+      isSnow: this.forecast.isSnow,
       ...this.getSyncPayload()
     };
   }
