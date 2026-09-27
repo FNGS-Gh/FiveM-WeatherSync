@@ -1,4 +1,3 @@
-import { CLOUDY_SET, FOGGY_SET, InitPayload, RainSequence, SUNNY_SET, SyncPayload, WEATHER_TYPES, WeatherType } from '../shared/utils';
 import { Config } from './config';
 import { WeekForecast, Forecast } from './forecast';
 import {
@@ -12,7 +11,19 @@ import {
   WeatherBase,
   WeatherModifier,
   WeatherInstance,
-} from './forecast_utils'
+} from './forecast_utils';
+import {
+  WEATHER_TYPES,
+  WeatherType,
+  SUNNY_SET,
+  CLOUDY_SET,
+  FOGGY_SET,
+  SNOW_SET,
+  MISC_SET,
+  RainSequence,
+  SyncPayload,
+  InitPayload
+} from '../shared/utils';
 
 const LONG_M_SEQ: Record<string, RainSequence[]> = {
   RAINY: [
@@ -374,6 +385,16 @@ class WorldWeather {
     if (!WEATHER_TYPES.includes(type)) {
       // Error notification
       console.log(`^1ERROR: Weather type is non-existent (${type})`);
+      return;
+    }
+
+    if (!Config.allowMisc && MISC_SET.includes(type)) {
+      // Notification
+      return;
+    }
+
+    if (!Config.allowSnow && SNOW_SET.includes(type)) {
+      // Notification
       return;
     }
 

@@ -38,6 +38,11 @@ export const FOGGY_SET: WeatherType[] = [
   "OVERCAST"
 ] as const;
 
+export const SNOW_SET: WeatherType[] = [
+  "XMAS",
+  "SNOW_HALLOWEEN",
+] as const;
+
 export const MISC_SET: WeatherType[] = [
   "HALLOWEEN",
   "NEUTRAL",
@@ -49,7 +54,7 @@ export const SNOW_MAP: Partial<Record<WeatherType, WeatherType>> = {
   "RAIN": "XMAS",
   "CLEARING": "XMAS",
   "THUNDER": "XMAS",
-  "FOGGY": "XMAS"
+  "FOGGY": "XMAS",
 } as const;
 
 export interface RainSequence {
