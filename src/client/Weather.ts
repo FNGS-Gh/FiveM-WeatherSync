@@ -85,6 +85,23 @@ onNet('Weather:Init', (payload: InitPayload) => {
 
 onNet('Weather:Sync', (payload: SyncPayload) => applyWeather(payload));
 
+onNet('Weather:UpdateNext', (tryNext: WeatherType, nextInMS: number) => {
+  let next = tryNext;
+
+  if (next) {
+    if (snowApplied)
+      next = SNOW_MAP[next] ?? "SNOW_HALLOWEEN";
+
+    if (!WEATHER_TYPES.includes(next)) {
+      next = WEATHER_TYPES[0];
+      // Notify player
+      console.log(`^1ERROR: NEXT weather type is non-existent (${tryNext}/${next})`);
+    }
+  }
+
+  emit('Weather:UpdateNextUI', next, nextInMS);
+});
+
 on('onClientMapStart', () => emitNet('Weather:RequestInit'));
 
 // tmp

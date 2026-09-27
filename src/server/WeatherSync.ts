@@ -420,7 +420,7 @@ class WorldWeather {
           this.next = null;
           this.nextInMS = 0;
 
-          emitNet('Weather:Sync', -1, this.getSyncPayload());
+          emitNet('Weather:UpdateNext', -1, this.next, this.nextInMS);
         }
       } else this.resetWeather();
     }
@@ -452,7 +452,7 @@ onNet('Weather:RequestInit', () => {
   emitNet('Weather:Init', src, WeatherSync.getInitPayload());
 });
 
-on('Time:Freeze', (state: boolean ) => WeatherSync.setFrozen(state));
+on('Time:Freeze', (state: boolean) => WeatherSync.setFrozen(state));
 
 globalThis.exports('IsCustomNow', () => WeatherSync.customNow);
 globalThis.exports('ResetWeather', () => WeatherSync.resetWeather());
