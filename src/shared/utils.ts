@@ -27,17 +27,29 @@ export const SUNNY_SET: WeatherType[] = [
 
 export const CLOUDY_SET: WeatherType[] = [
   "CLOUDS",
-  "SMOG"
+  "SMOG",
+  "OVERCAST"
 ] as const;
 
 export const FOGGY_SET: WeatherType[] = [
   "FOGGY",
-  "SMOG"
+  "SNOWLIGHT",
+  "SMOG",
+  "OVERCAST"
+] as const;
+
+export const MISC_SET: WeatherType[] = [
+  "HALLOWEEN",
+  "NEUTRAL",
+  "RAIN_HALLOWEEN",
 ] as const;
 
 export const SNOW_MAP: Partial<Record<WeatherType, WeatherType>> = {
-  "CLEAR": "XMAS",
-  // to do
+  "OVERCAST": "XMAS",
+  "RAIN": "XMAS",
+  "CLEARING": "XMAS",
+  "THUNDER": "XMAS",
+  "FOGGY": "XMAS"
 } as const;
 
 export interface RainSequence {

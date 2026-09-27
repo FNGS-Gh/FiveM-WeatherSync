@@ -146,6 +146,11 @@ const getWeatherSet = (base: WeatherBase): Set<WeatherType> => {
   }
 };
 
+const checkModifiers = (
+  modifier: WeatherModifier,
+  toCheck: WeatherModifier
+): boolean => (modifier & toCheck) !== 0;
+
 
 
 // Main Class
@@ -160,6 +165,7 @@ class WorldWeather {
   private base: WeatherBase = WeatherBase.SUNNY;
   private modifier: WeatherModifier = WeatherModifier.NONE;
   private currSet = new Set<WeatherType>;
+  private timeFrozen = false;
 
   private dayTimeout: NodeJS.Timeout | null = null;
   private updTimeout: NodeJS.Timeout | null = null;
@@ -245,6 +251,12 @@ class WorldWeather {
   private scheduleUpdate() {
     this.clearUpdTimeout();
 
+    if (this.timeFrozen && Config.fixedWeatherOnFrozen) {
+      this.next = null;
+      this.nextInMS = 0;
+      return;
+    }
+
     const inMinutes = getRandomRngInc(Config.gameUpdRng[0], Config.gameUpdRng[1]);
     const inMS = inMinutes * 60000;
 
@@ -253,6 +265,7 @@ class WorldWeather {
     if (
       this.modifier === WeatherModifier.NONE
       || !this.canDoModifier()
+      || (this.timeFrozen && Config.noRainOnFrozen)
     ) {
       const newType = this.getRandomType();
       this.currSet.delete(newType);
@@ -274,19 +287,21 @@ class WorldWeather {
     const totalDurM = getRandomRngInc(this.rainDurRng[0], this.rainDurRng[1]);
     const totalDurMS = totalDurM * 60000;
 
+    const modName = checkModifiers(this.modifier, WeatherModifier.THUNDER)
+      ? 'THUNDER'
+      : 'RAINY';
+
     const seqGroup = totalDurMS <= this.tinyRainDur ? TINY_M_SEQ : LONG_M_SEQ;
     const seqMemo = seqGroup === LONG_M_SEQ ? LONG_DUR_MEMO : TINY_DUR_MEMO;
-    const seqQueue = seqGroup[WeatherModifier[this.modifier]]
-      ? seqGroup[WeatherModifier[this.modifier]]
-      : seqGroup.RAINY;
+    const seqQueue = seqGroup[modName] ?? seqGroup.RAINY;
     
-    let rainRatio = seqMemo.get(WeatherModifier[this.modifier]);
+    let rainRatio = seqMemo.get(modName);
     if (!rainRatio) {
       rainRatio = seqQueue.reduce(
         (acc, curr) => acc + (curr.type !== 'OVERCAST' ? curr.durMult : 0.0),
         0.0
       );
-      seqMemo.set(WeatherModifier[this.modifier], rainRatio);
+      seqMemo.set(modName, rainRatio);
     }
 
     this.rainDurM = Math.floor(totalDurM * rainRatio);
@@ -300,6 +315,9 @@ class WorldWeather {
       this.currSet.add(this.current);
 
     this.current = type;
+
+    if (this.currSet.has(type))
+      this.currSet.delete(type);
 
     const testPaylod = {
       current: this.current,
@@ -389,6 +407,25 @@ class WorldWeather {
     emitNet('Weather:Sync', -1, this.getSyncPayload());
   }
 
+  public setFrozen(state: boolean) {
+    if (state === this.timeFrozen) return;
+
+    this.timeFrozen = state;
+
+    if (Config.fixedWeatherOnFrozen) {
+      if (state) {
+        if (this.rainDurM === -1) {
+          this.clearUpdTimeout();
+
+          this.next = null;
+          this.nextInMS = 0;
+
+          emitNet('Weather:Sync', -1, this.getSyncPayload());
+        }
+      } else this.resetWeather();
+    }
+  }
+
   public getInitPayload(): InitPayload {
     return {
       timeZone: this.forecast.data.timeZone,
@@ -414,6 +451,8 @@ onNet('Weather:RequestInit', () => {
   const src = source;
   emitNet('Weather:Init', src, WeatherSync.getInitPayload());
 });
+
+on('Time:Freeze', (state: boolean ) => WeatherSync.setFrozen(state));
 
 globalThis.exports('IsCustomNow', () => WeatherSync.customNow);
 globalThis.exports('ResetWeather', () => WeatherSync.resetWeather());

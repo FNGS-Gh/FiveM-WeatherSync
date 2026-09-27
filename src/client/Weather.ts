@@ -15,7 +15,7 @@ const validateWeather = (
   tryNext: WeatherType | null
 ): { weather: WeatherType, next: WeatherType | null } => {
   let weather = snowApplied
-    ? SNOW_MAP[tryWeather] ?? tryWeather
+    ? SNOW_MAP[tryWeather] ?? "SNOW_HALLOWEEN"
     : tryWeather;
 
   if (!WEATHER_TYPES.includes(weather)) {
@@ -28,7 +28,7 @@ const validateWeather = (
 
   if (next) {
     if (snowApplied)
-      next = SNOW_MAP[next] ?? next;
+      next = SNOW_MAP[next] ?? "SNOW_HALLOWEEN";
 
     if (!WEATHER_TYPES.includes(next)) {
       next = WEATHER_TYPES[0];

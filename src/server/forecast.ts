@@ -132,9 +132,7 @@ const getInstance = (
     ? 1.25 : 1.0;
 
   const chancesSet: SeasonChances = getChancesSet(season, Config);
-  const tempRange: number[] = prevInstance?.temp
-    ? prevInstance.temp
-    : chancesSet.temp;
+  const tempRange: number[] = prevInstance?.temp ?? chancesSet.temp;
 
   const instance = genInstanceBySeason(
     chancesSet,

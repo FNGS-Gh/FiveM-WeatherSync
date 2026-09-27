@@ -100,9 +100,7 @@ export const getWeekDay = (
 ): Week => {
   const parts = formatter.formatToParts(date);
   const dayPart = parts.find(p => p.type === 'weekday');
-  const dayName = dayPart?.value
-    ? dayPart?.value.toUpperCase() as WeekDay
-    : WEEK_ORDER[0] as WeekDay;
+  const dayName = (dayPart?.value ?? WEEK_ORDER[0]).toUpperCase() as WeekDay;
   return WEEK_ORDER.includes(dayName) ? Week[dayName] : 0;
 };
 
