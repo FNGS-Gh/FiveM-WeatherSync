@@ -78,34 +78,13 @@ The processor time is expectedly at the constant `0.00ms` value, since the clien
 
 ### Rain Sequences:
 
-|             | SHORT | LONG |
+| Rain length <br />\ <br /> Modifier | SHORT | LONG |
 | :---------: | ----- | ---- |
 | __RAIN__    | `OVERCAST` -> `CLEARING` -> `OVERCAST` | `OVERCAST` -> `CLEARING` -> `RAIN` -> `CLEARING` -> `OVERCAST` |
 | __THUNDER__ | `CLEARING` -> `RAIN` -> `THUNDER` -> `RAIN` -> `CLEARING` | `OVERCAST` -> `CLEARING` -> `RAIN` -> `THUNDER` -> `RAIN` -> `CLEARING` -> `OVERCAST` |
 
-<table border="1">
-  <tr>
-    <th style="text-align: center;">Weather Type</th>
-    <th style="text-align: center;">Implementation</th>
-  </tr>
-  <tr>
-    <td style="text-align: center;"><i>SUNNY</o></td>
-    <td>The in-game weather runs through a short cycle: <code>CLEAR</code> <-> <code>EXTRASUNNY</code></td>
-  </tr>
-  <tr>
-    <td style="text-align: center;"><i>CLOUDY</o></td>
-    <td>The in-game weather randomly runs through the following cycle: <code>CLOUDS</code> -> <code>SMOG</code> -> <code>OVERCAST</code></td>
-  </tr>
-  <tr>
-    <td style="text-align: center;"><i>FOGGY</o></td>
-    <td>Cycle: <code>FOGGY<code> -> <code>SNOWLIGHT<code> -> <code>SMOG<code> -> <code>OVERCAST<code></td>
-  </tr>
-  <tr>
-    <td style="text-align: center;"><i>OTHER</o></td>
-    <td>Applied only when a rain occurs. See more details below ▼</td>
-  </tr>
-</table>
-
 ---
 
 ## 3. Known Issues
+
+*None at the moment*
