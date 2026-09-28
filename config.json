@@ -1,0 +1,42 @@
+{
+  "kvpName": "weather_forecast",
+  "timeZone": "Europe/London",
+  "accurracy": 0.7,
+  "allowMisc": false,
+  "allowSnow": true,
+  "snowXmas": true,
+  "snowStart": "12/20",
+  "snowStop": "1/5",
+  "fixedWeatherOnFrozen": false,
+  "noRainOnFrozen": false,
+  "gameUpdRng": [20, 90],
+  "modifierDurRng": [15, 60],
+  "winterSet": {
+    "cloudy": 0.25,
+    "fog": 0.3,
+    "rain": 0.25,
+    "thunder": 0.05,
+    "temp": [4, 16]
+  },
+  "springSet": {
+    "cloudy": 0.1,
+    "fog": 0.2,
+    "rain": 0.3,
+    "thunder": 0.2,
+    "temp": [11, 25]
+  },
+  "summerSet": {
+    "cloudy": 0.05,
+    "fog": 0.25,
+    "rain": 0.4,
+    "thunder": 0.5,
+    "temp": [18, 36]
+  },
+  "autumnSet": {
+    "cloudy": 0.35,
+    "fog": 0.55,
+    "rain": 0.45,
+    "thunder": 0.45,
+    "temp": [9, 23]
+  }
+}
