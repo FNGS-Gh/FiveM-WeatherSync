@@ -85,6 +85,6 @@ The processor time is expectedly at the constant `0.00ms` value, since the clien
 
 ---
 
-## 3. Known Issues
+## 4. Known Issues
 
 *None at the moment*
