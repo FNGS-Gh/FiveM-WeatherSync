@@ -330,17 +330,6 @@ class WorldWeather {
     if (this.currSet.has(type))
       this.currSet.delete(type);
 
-    const testPaylod = {
-      current: this.current,
-      natural,
-      temp: this.temp,
-      set: Array.from(this.currSet),
-      rainDur: this.rainDurM,
-      next: this.next,
-      nextIn: this.nextInMS,
-    };
-    console.dir(testPaylod);
-
     emitNet('Weather:Sync', -1, this.getSyncPayload());
   }
   
@@ -465,7 +454,6 @@ class WorldWeather {
   }
 }
 
-console.dir(Forecast.data);
 const WeatherSync = new WorldWeather(Forecast);
 
 onNet('Weather:RequestInit', () => {

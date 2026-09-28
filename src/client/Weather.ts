@@ -103,16 +103,3 @@ onNet('Weather:UpdateNext', (tryNext: WeatherType, nextInMS: number) => {
 });
 
 on('onClientMapStart', () => emitNet('Weather:RequestInit'));
-
-// tmp
-RegisterCommand('weather', (_source: number, args: string[]) => {
-  SetWeatherTypeOvertimePersist(args[0], Number(args[1]));
-}, false);
-
-RegisterCommand('weatherNow', (_source: number, args: string[]) => {
-  SetWeatherTypeNowPersist(args[0]);
-}, false);
-
-RegisterCommand('rain', (_source: number, args: string[]) => {
-  SetRainLevel(parseFloat(args[0]));
-}, false);
