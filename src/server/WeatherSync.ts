@@ -460,7 +460,7 @@ class WorldWeather {
       weather: this.current,
       temp: this.temp,
       next: this.next,
-      nextInMS: this.nextInMS,
+      nextInMS: this.nextInMS
     };
   }
 }
