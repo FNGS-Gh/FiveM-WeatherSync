@@ -70,15 +70,15 @@ The processor time is expectedly at the constant `0.00ms` value, since the clien
 
 | Weather Type | Implementation |
 | :----------: | -------------- |
-| __**SUNNY**__ | The in-game weather runs through a short cycle: `CLEAR` <-> `EXTRASUNNY` |
-| __**CLOUDY**__ | The in-game weather randomly runs through the following cycle: `CLOUDS` -> `SMOG` -> `OVERCAST` |
-| __**FOGGY**__ | Cycle: `FOGGY` -> `SNOWLIGHT` -> `SMOG` -> `OVERCAST` |
-| __**OTHER**__ | Applied only when a rain occurs. See more details below ▼ |
+| *SUNNY* | The in-game weather runs through a short cycle: `CLEAR` <-> `EXTRASUNNY` |
+| *CLOUDY* | The in-game weather randomly runs through the following cycle: `CLOUDS` -> `SMOG` -> `OVERCAST` |
+| *FOGGY* | Cycle: `FOGGY` -> `SNOWLIGHT` -> `SMOG` -> `OVERCAST` |
+| *OTHER* | Applied only when a rain occurs. *See more details below* ▼ |
 ---
 
 ### Rain Sequences:
 
-| Rain length <br />\ <br /> Modifier | SHORT | LONG |
+| Length <br />\ <br /> Modifier | SHORT | LONG |
 | :---------: | ----- | ---- |
 | __RAIN__    | `OVERCAST` -> `CLEARING` -> `OVERCAST` | `OVERCAST` -> `CLEARING` -> `RAIN` -> `CLEARING` -> `OVERCAST` |
 | __THUNDER__ | `CLEARING` -> `RAIN` -> `THUNDER` -> `RAIN` -> `CLEARING` | `OVERCAST` -> `CLEARING` -> `RAIN` -> `THUNDER` -> `RAIN` -> `CLEARING` -> `OVERCAST` |

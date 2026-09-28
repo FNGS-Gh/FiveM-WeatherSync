@@ -9,7 +9,6 @@
   "snowStop": "1/5",
   "fixedWeatherOnFrozen": false,
   "noRainOnFrozen": false,
-  "tempCelsius": true,
   "gameUpdRng": [20, 90],
   "modifierDurRng": [15, 60],
   "winterSet": {
