@@ -171,22 +171,26 @@ class WorldWeather {
   private readonly tinyRainDur: number;
 
   private instance: WeatherInstance;
-  private tempRng: number[] = [];
-  private tempAvg = 0;
-  private base: WeatherBase = WeatherBase.SUNNY;
+
+  private base: WeatherBase         = WeatherBase.SUNNY;
   private modifier: WeatherModifier = WeatherModifier.NONE;
-  private currSet = new Set<WeatherType>;
-  private timeFrozen = false;
+  private currSet                   = new Set<WeatherType>;
+
+  private tempRng: number[] = [];
+  private tempAvg           = 0;
+  private timeFrozen        = false;
 
   private dayTimeout: NodeJS.Timeout | null = null;
   private updTimeout: NodeJS.Timeout | null = null;
 
   public current: WeatherType;
   public temp: number;
+
   public next: WeatherType | null = null;
-  public nextInMS = 0;
-  public rainDurM = -1;
-  public customNow = false;
+
+  public nextInMS   = 0;
+  public rainDurM   = -1;
+  public customNow  = false;
 
   constructor(forecast: WeekForecast) {
     this.forecast = forecast;
