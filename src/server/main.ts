@@ -1,5 +1,5 @@
 import { Config } from './config';
-import { WeekForecast, Forecast } from './forecast';
+import { WeekForecast, Forecast } from './Forecast';
 import {
   genChance,
   getRandomRng,
